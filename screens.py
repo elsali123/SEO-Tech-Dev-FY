@@ -115,52 +115,67 @@ class HomeScreen:
         char_path = os.path.join('assets', 'characters', f'{player_character.lower()}.png')
         self.char_img = pygame.image.load(char_path).convert_alpha()
         self.char_img = pygame.transform.smoothscale(self.char_img, (160, 160))
-        self.char_rect = self.char_img.get_rect(midleft=(60, screen.get_height() // 2))
+        # Player character movement
+        self.char_x = 100
+        self.char_y = int(screen.get_height() * 2 / 3) + 40  # bottom 1/3
+        self.char_speed = 8
+        self.char_rect = self.char_img.get_rect(midbottom=(self.char_x, self.char_y + 80))
         # Determine unselected characters
         all_chars = ['Capybara', 'Jaguar', 'Macaw']
         self.other_names = [c for c in all_chars if c != player_character]
-        # Load other character images and rects (stacked vertically on right)
+        # Place other animals along the same y-line as player
         self.other_imgs = []
         self.other_rects = []
-        spacing = 60
-        total_height = 160 * 2 + spacing
-        start_y = (screen.get_height() - total_height) // 2
+        self.other_xs = [screen.get_width() // 3, 2 * screen.get_width() // 3]
+        self.other_y = self.char_y + 80
         for i, name in enumerate(self.other_names):
             img_path = os.path.join('assets', 'characters', f'{name.lower()}.png')
             img = pygame.image.load(img_path).convert_alpha()
             img = pygame.transform.smoothscale(img, (160, 160))
-            y = start_y + i * (160 + spacing)
-            rect = img.get_rect(midright=(screen.get_width() - 60, y + 80))
+            rect = img.get_rect(midbottom=(self.other_xs[i], self.other_y))
             self.other_imgs.append(img)
             self.other_rects.append(rect)
-        self.other_hovered = -1
+        self.other_lit = [False, False]
+        self.proximity_threshold = 120
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEMOTION:
-            self.other_hovered = -1
+        # No mouse hover, only proximity
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
             for i, rect in enumerate(self.other_rects):
-                if rect.collidepoint(event.pos):
-                    self.other_hovered = i
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            for i, rect in enumerate(self.other_rects):
-                if rect.collidepoint(event.pos):
+                if self.other_lit[i]:
                     return self.other_names[i]
         return None
 
     def update(self):
-        pass
+        # Move player character with arrow keys
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.char_x -= self.char_speed
+        if keys[pygame.K_RIGHT]:
+            self.char_x += self.char_speed
+        # Constrain to screen bounds
+        min_x = 80
+        max_x = self.screen.get_width() - 80
+        self.char_x = max(min_x, min(max_x, self.char_x))
+        # Update rect for drawing
+        self.char_rect = self.char_img.get_rect(midbottom=(self.char_x, self.char_y + 80))
+        # Proximity highlight
+        for i, rect in enumerate(self.other_rects):
+            dist = abs(self.char_rect.centerx - rect.centerx)
+            self.other_lit[i] = dist < self.proximity_threshold
 
     def draw(self):
         self.screen.blit(self.background, (0, 0))
-        # Draw player's character (left)
+        # Draw player's character (bottom 1/3, movable)
         self.screen.blit(self.char_img, self.char_rect)
         name_surf = self.font.render(self.player_name, True, (255, 255, 255))
         name_rect = name_surf.get_rect(midbottom=(self.char_rect.centerx, self.char_rect.top - 10))
         self.screen.blit(name_surf, name_rect)
-        # Draw other characters (right, stacked vertically)
+        # Draw other characters along the same line
         for i, (img, rect, name) in enumerate(zip(self.other_imgs, self.other_rects, self.other_names)):
-            border_color = (255, 215, 0) if i == self.other_hovered else (180, 180, 180)
-            pygame.draw.rect(self.screen, border_color, rect.inflate(16, 16), border_radius=16)
+            if self.other_lit[i]:
+                border_color = (255, 215, 0)
+                pygame.draw.rect(self.screen, border_color, rect.inflate(16, 16), border_radius=16)
             self.screen.blit(img, rect)
             other_name_surf = self.small_font.render(name, True, (255, 255, 255))
             other_name_rect = other_name_surf.get_rect(midbottom=(rect.centerx, rect.top - 10))
