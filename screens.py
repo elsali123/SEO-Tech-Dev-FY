@@ -7,13 +7,27 @@ class OpeningScreen:
         self.screen = screen
         self.font = pygame.font.SysFont('Arial', 64)
         self.button_font = pygame.font.SysFont('Arial', 36)
+        self.instruction_font = pygame.font.SysFont('Arial', 18)
         self.title_text = self.font.render('Tropical Rainforest Adventure', True, (34, 139, 34))
         self.button_rect = pygame.Rect(0, 0, 220, 60)
-        self.button_rect.center = (screen.get_width() // 2, screen.get_height() // 2 + 100)
+        self.button_rect.center = (screen.get_width() // 2, screen.get_height() // 2 + 200)
         self.button_color = (70, 130, 180)
         self.button_hover_color = (100, 180, 220)
         self.button_text = self.button_font.render('Start', True, (255, 255, 255))
         self.hovered = False
+        # Instructions
+        self.instructions = [
+            "Pick a rainforest animal avatar and enter your name to begin.",
+            "You’ll arrive in a rainforest that’s hard to see, because the destruction",
+            "caused by climate change has left it hazy.",
+            "Use the arrow keys to move toward another animal and press Enter",
+            "to learn what they’re facing.",
+            "You can play a mini-game to take action and play your part",
+            "to restore the rainforest.",
+            "Ask the in-game chatbot to learn more about each animal.",
+            "Return to the home screen to see the rainforest grow clearer",
+            "as you make a difference!"
+        ]
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEMOTION:
@@ -29,9 +43,16 @@ class OpeningScreen:
     def draw(self):
         self.screen.fill((220, 255, 220))
         # Draw title
-        title_rect = self.title_text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2 - 100))
+        title_rect = self.title_text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2 - 180))
         self.screen.blit(self.title_text, title_rect)
-        # Draw button
+        # Draw instructions
+        start_y = title_rect.bottom + 30
+        for line in self.instructions:
+            text_surf = self.instruction_font.render(line, True, (60, 90, 60))
+            text_rect = text_surf.get_rect(center=(self.screen.get_width() // 2, start_y))
+            self.screen.blit(text_surf, text_rect)
+            start_y += 28
+         # Draw button
         color = self.button_hover_color if self.hovered else self.button_color
         pygame.draw.rect(self.screen, color, self.button_rect, border_radius=12)
         text_rect = self.button_text.get_rect(center=self.button_rect.center)
