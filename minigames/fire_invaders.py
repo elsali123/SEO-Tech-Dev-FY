@@ -20,7 +20,7 @@ class FireInvadersMinigame:
         self.bullets = []  # Each bullet is [x, y]
         self.bullet_speed = 12
         self.fires = []  # Each fire is [x, y]
-        self.fire_speed = 3
+        self.fire_speed = 2
         self.lives = 3
         self.score = 0
         self.max_fires = 7
@@ -106,10 +106,12 @@ class FireInvadersMinigame:
             pygame.draw.circle(self.screen, (255, 80, 0), (fire[0], fire[1]), 22)
             pygame.draw.circle(self.screen, (255, 200, 0), (fire[0], fire[1]), 12)
         # Draw HUD
+        controls_text = self.small_font.render("SPACE to shoot", True, (200, 200, 255))
         lives_surf = self.small_font.render(f'Lives: {self.lives}', True, (255, 255, 255))
         score_surf = self.small_font.render(f'Score: {self.score}', True, (255, 255, 255))
         self.screen.blit(lives_surf, (30, 20))
         self.screen.blit(score_surf, (self.screen.get_width() - 160, 20))
+        self.screen.blit(controls_text, (self.width//2 - 80, 20))
         # Game over/win
         if self.game_over:
             msg = 'You Win!' if self.win else 'Game Over'
