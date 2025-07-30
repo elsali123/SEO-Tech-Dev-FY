@@ -1,5 +1,5 @@
 import pygame
-from screens import OpeningScreen, CharacterSelectScreen, HomeScreen, InteractionScreen, NameInputScreen, ConversationScreen
+from screens import OpeningScreen, CharacterSelectScreen, HomeScreen, InteractionScreen, NameInputScreen, ConversationScreen, SVDExplanationScreen, EndingScreen
 from minigames.fire_invaders import FireInvadersMinigame
 from minigames.puzzle import PuzzleMinigame
 from minigames.drag_nest import DragNestMinigame
@@ -13,9 +13,11 @@ FPS = 60
 STAGE_OPENING = 'opening'
 STAGE_CHARACTER_SELECT = 'character_select'
 STAGE_NAME_INPUT = 'name_input'
+STAGE_SVD_EXPLANATION = 'svd_explanation'
 STAGE_HOME = 'home'
 STAGE_INTERACTION = 'interaction'
 STAGE_CONVERSATION = 'conversation'
+STAGE_ENDING = 'ending'
 
 # Background progression
 BG_STAGES = [
@@ -52,6 +54,11 @@ def main():
     bg_stage = 0
     completed_interactions = set()
     victory_played = False
+    victory_message_shown = False
+    ending_triggered = False
+    home_entry_time = None
+
+
 
     running = True
     while running:
@@ -60,6 +67,11 @@ def main():
                 running = False
             # Let the current screen handle events
             result = current_screen.handle_event(event)
+            if stage == STAGE_ENDING and result == 'explore':
+                interaction_target = None
+                stage = STAGE_HOME
+                current_screen = HomeScreen(screen, selected_character, player_name, BG_STAGES[bg_stage])
+                home_entry_time = pygame.time.get_ticks()
             if stage == STAGE_OPENING and result == 'next':
                 stage = STAGE_CHARACTER_SELECT
                 current_screen = CharacterSelectScreen(screen)
@@ -69,11 +81,14 @@ def main():
                 current_screen = NameInputScreen(screen)
             elif stage == STAGE_NAME_INPUT and result:
                 player_name = result
+                stage = STAGE_SVD_EXPLANATION
+                current_screen = SVDExplanationScreen(screen)
+            elif stage == STAGE_SVD_EXPLANATION and result == 'home':
                 stage = STAGE_HOME
                 home_screen = HomeScreen(screen, selected_character, player_name, BG_STAGES[bg_stage])
                 fade_in(screen, home_screen.draw)
                 current_screen = home_screen
-            elif stage == STAGE_HOME and result:
+            elif stage == STAGE_HOME and result and result != 'explore':
                 # result is the name of the character to interact with
                 interaction_target = result
                 stage = STAGE_INTERACTION
@@ -82,6 +97,7 @@ def main():
                 if result == 'back':
                     stage = STAGE_HOME
                     current_screen = HomeScreen(screen, selected_character, player_name, BG_STAGES[bg_stage])
+                    home_entry_time = pygame.time.get_ticks()
                 elif result == 'minigame':
                     # Launch the appropriate minigame
                     if interaction_target == 'Capybara':
@@ -118,6 +134,18 @@ def main():
                 pygame.mixer.music.load(VICTORY_SOUND)
                 pygame.mixer.music.play()
                 victory_played = True
+
+                font = pygame.font.SysFont('Arial', 28)
+                msg = "Head home right now!"
+                text_surface = font.render(msg, True, (255, 255, 255))
+                screen.fill((0, 0, 0))
+                screen.blit(text_surface, (
+                    screen.get_width() // 2 - text_surface.get_width() // 2,
+                    screen.get_height() // 2 - text_surface.get_height() // 2
+                ))
+                pygame.display.flip()
+                pygame.time.delay(2000)
+                victory_message_shown = True
             except Exception as e:
                 print(f"Could not play victory sound: {e}")
 
@@ -126,6 +154,12 @@ def main():
         if isinstance(current_screen, HomeScreen):
             current_screen.set_background(BG_STAGES[bg_stage])
         current_screen.draw()
+        # After going home once victory is triggered, go to ending screen
+        if stage == STAGE_HOME and victory_played and not ending_triggered:
+            if home_entry_time and pygame.time.get_ticks() - home_entry_time >= 3000:
+                stage = STAGE_ENDING
+                current_screen = EndingScreen(screen)
+                ending_triggered = True
         pygame.display.flip()
         clock.tick(FPS)
 

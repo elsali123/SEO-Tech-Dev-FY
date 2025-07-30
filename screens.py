@@ -1,5 +1,6 @@
 import pygame
 import os
+import sys
 from pygame import Surface
 from conversation import ConversationManager
 
@@ -19,15 +20,14 @@ class OpeningScreen:
         # Instructions
         self.instructions = [
             "Pick a rainforest animal avatar and enter your name to begin.",
-            "You’ll arrive in a rainforest that’s hard to see, because the destruction",
-            "caused by climate change has left it hazy.",
+            " ",
             "Use the arrow keys to move toward another animal and press Enter",
             "to learn what they’re facing.",
-            "You can play a mini-game to take action and play your part",
-            "to restore the rainforest.",
-            "Ask the in-game chatbot to learn more about each animal.",
-            "Return to the home screen to see the rainforest grow clearer",
-            "as you make a difference!"
+            " ",
+            "You can play a mini-game or ask the in-game chatbot to learn more",
+            "about each animal",
+            " ",
+            "Return to the home screen after interactions"
         ]
 
     def handle_event(self, event):
@@ -47,7 +47,7 @@ class OpeningScreen:
         title_rect = self.title_text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2 - 180))
         self.screen.blit(self.title_text, title_rect)
         # Draw instructions
-        start_y = title_rect.bottom + 30
+        start_y = title_rect.bottom + 35
         for line in self.instructions:
             text_surf = self.instruction_font.render(line, True, (60, 90, 60))
             text_rect = text_surf.get_rect(center=(self.screen.get_width() // 2, start_y))
@@ -121,6 +121,53 @@ class CharacterSelectScreen:
             name_surf = self.small_font.render(char['name'], True, (60, 60, 60))
             name_rect = name_surf.get_rect(center=(rect.centerx, rect.bottom + 28))
             self.screen.blit(name_surf, name_rect)
+
+class SVDExplanationScreen:
+    def __init__(self, screen):
+        self.screen = screen
+        self.font = pygame.font.SysFont('Arial', 36)
+        self.small_font = pygame.font.SysFont('Arial', 24)
+        self.continue_button = pygame.Rect(0, 0, 220, 60)
+        self.continue_button.center = (screen.get_width() // 2, screen.get_height() - 150)
+        self.hovered = False
+        self.button_color = (70, 130, 180)
+        self.button_hover_color = (100, 180, 220)
+
+        self.lines = [
+            "As you interact with animals and complete mini-games,",
+            "you will notice that the rainforest backrgound becomes clearer.",
+            "",
+            "This is because your actions restore the image using",
+            "a mathematical method called the SVD (Singular Value Decomposition).",
+            "",
+            "You're helping rebuild the forest! Your goal is to complete at least 3 interactions."
+        ]
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEMOTION:
+            self.hovered = self.continue_button.collidepoint(event.pos)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.continue_button.collidepoint(event.pos):
+                return 'home'
+        return None
+
+    def update(self):
+        pass
+
+    def draw(self):
+        self.screen.fill((220, 255, 220))
+        y = 130
+        for line in self.lines:
+            text_surf = self.small_font.render(line, True, (40, 70, 40))
+            text_rect = text_surf.get_rect(center=(self.screen.get_width() // 2, y))
+            self.screen.blit(text_surf, text_rect)
+            y += 40
+        #Continue button
+        color = self.button_hover_color if self.hovered else self.button_color
+        pygame.draw.rect(self.screen, color, self.continue_button, border_radius=12)
+        btn_text = self.font.render("Continue", True, (255, 255, 255))
+        btn_rect = btn_text.get_rect(center=self.continue_button.center)
+        self.screen.blit(btn_text, btn_rect)
 
 class HomeScreen:
     def __init__(self, screen, player_character, player_name="Player", background_path=None):
@@ -515,3 +562,40 @@ class ConversationScreen:
         back_text = self.font.render("Back", True, (255, 255, 255))
         back_rect = back_text.get_rect(center=self.back_button.center)
         self.screen.blit(back_text, back_rect) 
+
+import pygame
+import sys
+
+class EndingScreen:
+    def __init__(self, screen):
+        self.screen = screen
+        self.font = pygame.font.SysFont('Arial', 36)
+        self.small_font = pygame.font.SysFont('Arial', 28)
+        self.explore_button = pygame.Rect(0, 0, 220, 60)
+        self.exit_button = pygame.Rect(0, 0, 180, 60)
+        self.explore_button.center = (screen.get_width() // 2 - 150, screen.get_height() // 2 + 60)
+        self.exit_button.center = (screen.get_width() // 2 + 150, screen.get_height() // 2 + 60)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.exit_button.collidepoint(event.pos):
+                pygame.quit()
+                sys.exit()
+            elif self.explore_button.collidepoint(event.pos):
+                return 'explore'
+
+    def update(self):
+        pass
+
+    def draw(self):
+        self.screen.fill((0, 100, 50))
+        title = self.font.render("The rainforest is restored!", True, (255, 255, 255))
+        self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 120))
+        message = self.small_font.render("You’ve made a big difference. Want to explore more?", True, (230, 230, 230))
+        self.screen.blit(message, (self.screen.get_width() // 2 - message.get_width() // 2, 200))
+        pygame.draw.rect(self.screen, (70, 180, 70), self.explore_button)
+        pygame.draw.rect(self.screen, (180, 70, 70), self.exit_button)
+        explore_text = self.small_font.render("Explore More", True, (0, 0, 0))
+        exit_text = self.small_font.render("Exit Game", True, (0, 0, 0))
+        self.screen.blit(explore_text, (self.explore_button.centerx - explore_text.get_width() // 2, self.explore_button.centery - 15))
+        self.screen.blit(exit_text, (self.exit_button.centerx - exit_text.get_width() // 2, self.exit_button.centery - 15))
