@@ -123,14 +123,18 @@ class CharacterSelectScreen:
             self.screen.blit(name_surf, name_rect)
 
 class HomeScreen:
-    def __init__(self, screen, player_character, player_name="Player"):
+    def __init__(self, screen, player_character, player_name="Player", background_path=None):
         self.screen = screen
         self.player_character = player_character
         self.player_name = player_name
         self.font = pygame.font.SysFont('Arial', 32)
         self.small_font = pygame.font.SysFont('Arial', 28)
         # Load background
-        bg_path = os.path.join('assets', 'background', 'rainforest.png')
+        if background_path is None:
+            bg_path = os.path.join('assets', 'background', 'rainforest.png')
+        else:
+            bg_path = background_path
+        self.background_path = bg_path
         self.background = pygame.image.load(bg_path).convert()
         self.background = pygame.transform.smoothscale(self.background, (screen.get_width(), screen.get_height()))
         # Load player character image
@@ -159,6 +163,11 @@ class HomeScreen:
             self.other_rects.append(rect)
         self.other_lit = [False, False]
         self.proximity_threshold = 120
+
+    def set_background(self, background_path):
+        self.background_path = background_path
+        self.background = pygame.image.load(background_path).convert()
+        self.background = pygame.transform.smoothscale(self.background, (self.screen.get_width(), self.screen.get_height()))
 
     def handle_event(self, event):
         # No mouse hover, only proximity
