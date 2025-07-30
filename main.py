@@ -41,7 +41,7 @@ def fade_in(screen, draw_func, duration=700):
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption('Tropical Rainforest Adventure')
+    pygame.display.set_caption('Rainforest Revival')
     clock = pygame.time.Clock()
     pygame.mixer.init()
 

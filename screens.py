@@ -10,7 +10,7 @@ class OpeningScreen:
         self.font = pygame.font.SysFont('Arial', 64)
         self.button_font = pygame.font.SysFont('Arial', 36)
         self.instruction_font = pygame.font.SysFont('Arial', 18)
-        self.title_text = self.font.render('Tropical Rainforest Adventure', True, (34, 139, 34))
+        self.title_text = self.font.render('Rainforest Revival', True, (34, 139, 34))
         self.button_rect = pygame.Rect(0, 0, 220, 60)
         self.button_rect.center = (screen.get_width() // 2, screen.get_height() // 2 + 200)
         self.button_color = (70, 130, 180)
