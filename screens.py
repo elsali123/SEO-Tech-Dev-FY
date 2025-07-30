@@ -1,6 +1,7 @@
 import pygame
 import os
 from pygame import Surface
+from conversation import ConversationManager
 
 class OpeningScreen:
     def __init__(self, screen):
@@ -206,7 +207,7 @@ class InteractionScreen:
         self.button_rects = []
         self.hovered = -1
         self._layout_buttons()
-        # Placeholder facts
+        '''
         self.facts = {
             'Capybara': [
                 'Capybaras are hunted for their meat and hides.',
@@ -221,6 +222,7 @@ class InteractionScreen:
                 'Deforestation reduces nesting sites and feeding areas.'
             ]
         }
+        '''
 
     def _layout_buttons(self):
         btn_w, btn_h = 260, 54
@@ -257,10 +259,10 @@ class InteractionScreen:
         name_rect = name_surf.get_rect(center=(self.screen.get_width()//2, self.animal_rect.bottom + 20))
         self.screen.blit(name_surf, name_rect)
         # Draw facts (top left)
-        facts = self.facts.get(self.animal_name, [])
-        for i, fact in enumerate(facts):
-            fact_surf = self.small_font.render(fact, True, (255, 255, 255))
-            self.screen.blit(fact_surf, (40, 40 + i * 32))
+        # facts = self.facts.get(self.animal_name, [])
+        # for i, fact in enumerate(facts):
+        #     fact_surf = self.small_font.render(fact, True, (255, 255, 255))
+        #     self.screen.blit(fact_surf, (40, 40 + i * 32))
         # Draw buttons
         for i, (btn, rect) in enumerate(zip(self.buttons, self.button_rects)):
             color = (100, 180, 220) if i == self.hovered else (70, 130, 180)
@@ -312,3 +314,174 @@ class NameInputScreen:
             cursor_x = self.input_box.x + 16 + name_surf.get_width() + 2
             cursor_y = self.input_box.y + 12
             pygame.draw.rect(self.screen, (60, 60, 60), (cursor_x, cursor_y, 3, 36)) 
+
+class ConversationScreen:
+    def __init__(self, screen, character_name, player_name):
+        self.screen = screen
+        self.character_name = character_name
+        self.player_name = player_name
+        self.font = pygame.font.SysFont('Arial', 24)
+        self.small_font = pygame.font.SysFont('Arial', 18)
+        self.title_font = pygame.font.SysFont('Arial', 32)
+        
+        # Conversation manager
+        try:
+            self.conversation_manager = ConversationManager()
+            self.conversation_started = False
+        except:
+            self.conversation_manager = None
+            self.conversation_started = False
+        
+        # UI elements
+        self.input_box = pygame.Rect(50, screen.get_height() - 80, screen.get_width() - 300, 40)
+        self.send_button = pygame.Rect(screen.get_width() - 230, screen.get_height() - 80, 80, 40)
+        self.back_button = pygame.Rect(screen.get_width() - 130, screen.get_height() - 80, 80, 40)
+        
+        # Conversation state - only keep recent messages
+        self.input_text = ""
+        self.messages = []
+        self.suggestions = []
+        
+        # Load character image
+        char_path = os.path.join('assets', 'characters', f'{character_name.lower()}.png')
+        self.char_img = pygame.image.load(char_path).convert_alpha()
+        self.char_img = pygame.transform.smoothscale(self.char_img, (120, 120))
+        
+        # Load background
+        bg_path = os.path.join('assets', 'background', 'rainforest.png')
+        bg = pygame.image.load(bg_path).convert()
+        bg = pygame.transform.smoothscale(bg, (screen.get_width()//8, screen.get_height()//8))
+        self.background = pygame.transform.smoothscale(bg, (screen.get_width(), screen.get_height()))
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.back_button.collidepoint(event.pos):
+                return 'back'
+            elif self.send_button.collidepoint(event.pos):
+                self.send_message()
+            else:
+                # Check suggestion buttons
+                for i, suggestion in enumerate(self.suggestions):
+                    suggestion_rect = pygame.Rect(50 + (i % 2) * 300, 200 + (i // 2) * 40, 280, 30)
+                    if suggestion_rect.collidepoint(event.pos):
+                        self.input_text = suggestion
+                        self.send_message()
+                        break
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                self.send_message()
+            elif event.key == pygame.K_BACKSPACE:
+                self.input_text = self.input_text[:-1]
+            elif len(self.input_text) < 100 and event.unicode.isprintable():
+                self.input_text += event.unicode
+        return None
+
+    def send_message(self):
+        if not self.input_text.strip():
+            return
+        
+        if not self.conversation_started and self.conversation_manager:
+            # Start conversation
+            response = self.conversation_manager.start_conversation(self.character_name, self.player_name)
+            self.messages.append(("character", response))
+            self.conversation_started = True
+        
+        # Add player message
+        self.messages.append(("player", self.input_text))
+        
+        # Get character response
+        if self.conversation_manager:
+            response = self.conversation_manager.continue_conversation(self.character_name, self.input_text)
+            self.messages.append(("character", response))
+        
+        # Keep only the last 4 messages (2 exchanges)
+        if len(self.messages) > 4:
+            self.messages = self.messages[-4:]
+        
+        self.input_text = ""
+        #self.update_suggestions()
+
+    def update_suggestions(self):
+        if self.conversation_manager:
+            self.suggestions = self.conversation_manager.get_conversation_suggestions(self.character_name)
+        else:
+            self.suggestions = ["Tell me about yourself", "What threats do you face?"]
+
+    def update(self):
+        pass
+
+    def draw(self):
+        self.screen.blit(self.background, (0, 0))
+        
+        # Draw character image and name
+        char_rect = self.char_img.get_rect(midtop=(self.screen.get_width() // 2, 20))
+        self.screen.blit(self.char_img, char_rect)
+        name_surf = self.title_font.render(f"Chat with {self.character_name}", True, (255, 255, 255))
+        name_rect = name_surf.get_rect(midtop=(self.screen.get_width() // 2, 150))
+        self.screen.blit(name_surf, name_rect)
+        
+        # Draw conversation area
+        conversation_rect = pygame.Rect(50, 200, self.screen.get_width() - 100, self.screen.get_height() - 300)
+        pygame.draw.rect(self.screen, (255, 255, 255, 100), conversation_rect, border_radius=10)
+        pygame.draw.rect(self.screen, (100, 100, 100), conversation_rect, 2, border_radius=10)
+        
+        # Draw recent messages (last 4 messages)
+        y_offset = 220
+        for msg_type, content in self.messages:
+            if y_offset < self.screen.get_height() - 120:
+                color = (70, 130, 180) if msg_type == "player" else (34, 139, 34)
+                bg_color = (200, 220, 255) if msg_type == "player" else (200, 255, 200)
+                
+                # Word wrap
+                words = content.split()
+                lines = []
+                current_line = ""
+                for word in words:
+                    test_line = current_line + " " + word if current_line else word
+                    if self.font.size(test_line)[0] < conversation_rect.width - 40:
+                        current_line = test_line
+                    else:
+                        if current_line:
+                            lines.append(current_line)
+                        current_line = word
+                if current_line:
+                    lines.append(current_line)
+                
+                # Draw message bubble
+                line_height = 25
+                bubble_height = len(lines) * line_height + 20
+                bubble_rect = pygame.Rect(conversation_rect.x + 20, y_offset, conversation_rect.width - 40, bubble_height)
+                pygame.draw.rect(self.screen, bg_color, bubble_rect, border_radius=10)
+                pygame.draw.rect(self.screen, color, bubble_rect, 2, border_radius=10)
+                
+                # Draw text
+                for i, line in enumerate(lines):
+                    text_surf = self.font.render(line, True, (60, 60, 60))
+                    self.screen.blit(text_surf, (bubble_rect.x + 10, bubble_rect.y + 10 + i * line_height))
+                
+                y_offset += bubble_height + 10
+        
+        # Draw suggestion buttons
+        for i, suggestion in enumerate(self.suggestions):
+            suggestion_rect = pygame.Rect(50 + (i % 2) * 300, 200 + (i // 2) * 40, 280, 30)
+            pygame.draw.rect(self.screen, (100, 180, 220), suggestion_rect, border_radius=8)
+            text_surf = self.small_font.render(suggestion, True, (255, 255, 255))
+            text_rect = text_surf.get_rect(center=suggestion_rect.center)
+            self.screen.blit(text_surf, text_rect)
+        
+        # Draw input area
+        pygame.draw.rect(self.screen, (255, 255, 255), self.input_box, border_radius=8)
+        pygame.draw.rect(self.screen, (100, 100, 100), self.input_box, 2, border_radius=8)
+        input_surf = self.font.render(self.input_text, True, (60, 60, 60))
+        self.screen.blit(input_surf, (self.input_box.x + 10, self.input_box.y + 8))
+        
+        # Draw buttons
+        pygame.draw.rect(self.screen, (70, 130, 180), self.send_button, border_radius=8)
+        send_text = self.font.render("Send", True, (255, 255, 255))
+        send_rect = send_text.get_rect(center=self.send_button.center)
+        self.screen.blit(send_text, send_rect)
+        
+        pygame.draw.rect(self.screen, (180, 70, 70), self.back_button, border_radius=8)
+        back_text = self.font.render("Back", True, (255, 255, 255))
+        back_rect = back_text.get_rect(center=self.back_button.center)
+        self.screen.blit(back_text, back_rect) 

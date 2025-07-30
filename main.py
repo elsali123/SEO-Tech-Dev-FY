@@ -1,5 +1,5 @@
 import pygame
-from screens import OpeningScreen, CharacterSelectScreen, HomeScreen, InteractionScreen, NameInputScreen
+from screens import OpeningScreen, CharacterSelectScreen, HomeScreen, InteractionScreen, NameInputScreen, ConversationScreen
 from minigames.fire_invaders import FireInvadersMinigame
 from minigames.puzzle import PuzzleMinigame
 from minigames.drag_nest import DragNestMinigame
@@ -14,6 +14,7 @@ STAGE_CHARACTER_SELECT = 'character_select'
 STAGE_NAME_INPUT = 'name_input'
 STAGE_HOME = 'home'
 STAGE_INTERACTION = 'interaction'
+STAGE_CONVERSATION = 'conversation'
 
 
 def fade_in(screen, draw_func, duration=700):
@@ -82,7 +83,13 @@ def main():
                     # After minigame, return to interaction screen
                     current_screen = InteractionScreen(screen, interaction_target)
                 elif result == 'facts':
-                    print('Facts would be shown here!')
+                    # Launch conversation screen
+                    stage = STAGE_CONVERSATION
+                    current_screen = ConversationScreen(screen, interaction_target, player_name)
+            elif stage == STAGE_CONVERSATION and result == 'back':
+                # Return to interaction screen
+                stage = STAGE_INTERACTION
+                current_screen = InteractionScreen(screen, interaction_target)
 
         current_screen.update()
         current_screen.draw()

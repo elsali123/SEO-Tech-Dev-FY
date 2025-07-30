@@ -1,2 +1,4 @@
 pygame
 Pillow
+google-generativeai
+python-dotenv
