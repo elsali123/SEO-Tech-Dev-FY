@@ -135,7 +135,7 @@ class SVDExplanationScreen:
 
         self.lines = [
             "As you interact with animals and complete mini-games,",
-            "you will notice that the rainforest backrgound becomes clearer.",
+            "you will notice that the rainforest background becomes clearer.",
             "",
             "This is because your actions restore the image using",
             "a mathematical method called the SVD (Singular Value Decomposition).",
