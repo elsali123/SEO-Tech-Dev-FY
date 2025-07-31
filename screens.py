@@ -148,7 +148,7 @@ class SVDExplanationScreen:
             self.hovered = self.continue_button.collidepoint(event.pos)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.continue_button.collidepoint(event.pos):
-                return 'home'
+                return 'game_instructions'
         return None
 
     def update(self):
@@ -168,6 +168,106 @@ class SVDExplanationScreen:
         btn_text = self.font.render("Continue", True, (255, 255, 255))
         btn_rect = btn_text.get_rect(center=self.continue_button.center)
         self.screen.blit(btn_text, btn_rect)
+
+class GameInstructionsScreen:
+    def __init__(self, screen):
+        self.screen = screen
+        self.font = pygame.font.SysFont('Arial', 24)
+        self.subtitle_font = pygame.font.SysFont('Arial', 32)
+        self.text_font = pygame.font.SysFont('Arial', 20)
+        self.button_font = pygame.font.SysFont('Arial', 36)
+        
+        # Background color
+        self.bg_color = (220, 255, 220)
+        
+        # Continue button
+        self.button_rect = pygame.Rect(0, 0, 200, 60)
+        self.button_rect.center = (screen.get_width() // 2, screen.get_height() - 80)
+        self.button_color = (70, 130, 180)
+        self.button_hover_color = (100, 180, 220)
+        self.button_text = self.button_font.render('Continue', True, (255, 255, 255))
+        self.hovered = False
+        
+        # Instructions content
+        self.instructions = [
+            "Capybara Minigame:",
+            "- Use LEFT and RIGHT arrow keys to move and SPACEBAR to shoot water bullets",
+            "- Extinguish fires before they reach the bottom",
+            "- Get 10 points to win!",
+            "",
+            "Macaw Minigame:",
+            "- Click on the nest to drag the eggs back to the nest",
+            "- Return all eggs to the nest to win!",
+            "",
+            "Jaguar Minigame:",
+            "- Click on image blocks to move them",
+            "- Reconstruct the forest image to win!",
+            ""
+
+        ]
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEMOTION:
+            self.hovered = self.button_rect.collidepoint(event.pos)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.button_rect.collidepoint(event.pos):
+                return 'home'
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                return 'home'
+        return None
+
+    def update(self):
+        pass
+
+    def draw(self):
+        self.screen.fill(self.bg_color)
+        
+        # Draw title
+        title = self.font.render('Mini-game Instructions', True, (34, 139, 34))
+        title_rect = title.get_rect(center=(self.screen.get_width() // 2, 20))
+        self.screen.blit(title, title_rect)
+        
+        # Draw instructions
+        y_offset = 40
+        line_spacing = 35
+        
+        for line in self.instructions:
+            if line == "":
+                y_offset += line_spacing // 2
+                continue
+                
+            # Different styling for headers vs regular text
+            if line.startswith("🏠") or line.startswith("🎮") or line.startswith("🌿"):
+                color = (34, 139, 34)  # Green for section headers
+                font = self.subtitle_font
+            elif line.startswith("How to Play:"):
+                color = (34, 139, 34)
+                font = self.subtitle_font
+            elif line.startswith("Home Screen:") or line.startswith("Capybara Minigame:") or line.startswith("Macaw Minigame:") or line.startswith("Jaguar Minigame:"):
+                color = (34, 139, 34)
+                font = self.subtitle_font
+            else:
+                color = (60, 60, 60)  # Dark gray for regular text
+                font = self.text_font
+            
+            text_surf = font.render(line, True, color)
+            
+            # Center main headers, left-align bullet points
+            if line.startswith("•"):
+                x_pos = self.screen.get_width() // 2 - 200
+            else:
+                x_pos = self.screen.get_width() // 2 - text_surf.get_width() // 2
+            
+            self.screen.blit(text_surf, (x_pos, y_offset))
+            y_offset += line_spacing
+        
+        # Draw continue button
+        color = self.button_hover_color if self.hovered else self.button_color
+        pygame.draw.rect(self.screen, color, self.button_rect, border_radius=12)
+        text_rect = self.button_text.get_rect(center=self.button_rect.center)
+        self.screen.blit(self.button_text, text_rect)
+
 
 class HomeScreen:
     def __init__(self, screen, player_character, player_name="Player", background_path=None):
@@ -251,9 +351,15 @@ class HomeScreen:
         self.screen.blit(name_surf, name_rect)
         # Draw other characters along the same line
         for i, (img, rect, name) in enumerate(zip(self.other_imgs, self.other_rects, self.other_names)):
+            # if self.other_lit[i]:
+            #     border_color = (255, 215, 0)
+            #     pygame.draw.rect(self.screen, border_color, rect.inflate(16, 16), border_radius=16)
             if self.other_lit[i]:
-                border_color = (255, 215, 0)
-                pygame.draw.rect(self.screen, border_color, rect.inflate(16, 16), border_radius=16)
+                border_color = (255, 215, 0, 180)  # Added alpha value (180 = less transparent)
+                border_surface = pygame.Surface((rect.width + 16, rect.height + 16), pygame.SRCALPHA)
+                pygame.draw.rect(border_surface, border_color, border_surface.get_rect(), border_radius=16)
+                border_rect = border_surface.get_rect(center=rect.center)
+                self.screen.blit(border_surface, border_rect)
             self.screen.blit(img, rect)
             other_name_surf = self.small_font.render(name, True, (255, 255, 255))
             other_name_rect = other_name_surf.get_rect(midbottom=(rect.centerx, rect.top - 10))
@@ -284,22 +390,7 @@ class InteractionScreen:
         self.button_rects = []
         self.hovered = -1
         self._layout_buttons()
-        '''
-        self.facts = {
-            'Capybara': [
-                'Capybaras are hunted for their meat and hides.',
-                'Fires have destroyed capybara habitat on a large scale.'
-            ],
-            'Jaguar': [
-                'Habitat loss, poaching, and conflicts with livestock owners threaten jaguars.',
-                'Habitat corridors are vital for jaguars.'
-            ],
-            'Macaw': [
-                'Many macaws are targeted for their bright feathers.',
-                'Deforestation reduces nesting sites and feeding areas.'
-            ]
-        }
-        '''
+
 
     def _layout_buttons(self):
         btn_w, btn_h = 260, 54
@@ -335,11 +426,7 @@ class InteractionScreen:
         name_surf = self.font.render(self.animal_name, True, (255, 255, 255))
         name_rect = name_surf.get_rect(center=(self.screen.get_width()//2, self.animal_rect.bottom + 20))
         self.screen.blit(name_surf, name_rect)
-        # Draw facts (top left)
-        # facts = self.facts.get(self.animal_name, [])
-        # for i, fact in enumerate(facts):
-        #     fact_surf = self.small_font.render(fact, True, (255, 255, 255))
-        #     self.screen.blit(fact_surf, (40, 40 + i * 32))
+
         # Draw buttons
         for i, (btn, rect) in enumerate(zip(self.buttons, self.button_rects)):
             color = (100, 180, 220) if i == self.hovered else (70, 130, 180)
@@ -477,12 +564,6 @@ class ConversationScreen:
         
         self.input_text = ""
         #self.update_suggestions()
-
-    def update_suggestions(self):
-        if self.conversation_manager:
-            self.suggestions = self.conversation_manager.get_conversation_suggestions(self.character_name)
-        else:
-            self.suggestions = ["Tell me about yourself", "What threats do you face?"]
 
     def update(self):
         pass

@@ -11,7 +11,7 @@ class DragNestMinigame:
         self.running = True
         self.width = screen.get_width()
         self.height = screen.get_height()
-        self.nest_rect = pygame.Rect(self.width // 2 - 80, self.height // 2 + 100, 160, 80)
+        self.nest_rect = pygame.Rect(self.width // 2 - 80, self.height // 2 + 100, 640, 320)
         
         # Load image assets
         self.load_assets()
@@ -28,7 +28,7 @@ class DragNestMinigame:
             # Load nest
             self.nest_image = pygame.image.load('assets/Minigame_assets/empty_nest.png')
             # Scale nest to fit the nest_rect size
-            self.nest_image = pygame.transform.scale(self.nest_image, (160, 80))
+            self.nest_image = pygame.transform.scale(self.nest_image, (640, 320))
             
             # Load egg
             self.egg_image = pygame.image.load('assets/Minigame_assets/egg.png')
@@ -108,7 +108,10 @@ class DragNestMinigame:
             nest_text = self.small_font.render('Nest', True, (80, 40, 0))
             nest_rect = nest_text.get_rect(center=self.nest_rect.center)
             self.screen.blit(nest_text, nest_rect)
-        
+
+        win_text = self.small_font.render('To win, return all eggs to the nest!', True, (255, 255, 255))
+        win_text_rect = win_text.get_rect(center=(self.width // 2, 25))
+        self.screen.blit(win_text, win_text_rect)
         # Draw eggs
         for i, egg in enumerate(self.eggs):
             if self.egg_image:

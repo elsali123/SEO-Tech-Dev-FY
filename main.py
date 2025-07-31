@@ -1,5 +1,5 @@
 import pygame
-from screens import OpeningScreen, CharacterSelectScreen, HomeScreen, InteractionScreen, NameInputScreen, ConversationScreen, SVDExplanationScreen, EndingScreen
+from screens import OpeningScreen, CharacterSelectScreen, HomeScreen, InteractionScreen, NameInputScreen, ConversationScreen, SVDExplanationScreen, EndingScreen, GameInstructionsScreen
 from minigames.fire_invaders import FireInvadersMinigame
 from minigames.puzzle import PuzzleMinigame
 from minigames.drag_nest import DragNestMinigame
@@ -14,6 +14,7 @@ STAGE_OPENING = 'opening'
 STAGE_CHARACTER_SELECT = 'character_select'
 STAGE_NAME_INPUT = 'name_input'
 STAGE_SVD_EXPLANATION = 'svd_explanation'
+STAGE_GAME_INSTRUCTIONS = 'game_instructions'
 STAGE_HOME = 'home'
 STAGE_INTERACTION = 'interaction'
 STAGE_CONVERSATION = 'conversation'
@@ -83,7 +84,10 @@ def main():
                 player_name = result
                 stage = STAGE_SVD_EXPLANATION
                 current_screen = SVDExplanationScreen(screen)
-            elif stage == STAGE_SVD_EXPLANATION and result == 'home':
+            elif stage == STAGE_SVD_EXPLANATION and result == 'game_instructions':
+                stage = STAGE_GAME_INSTRUCTIONS
+                current_screen = GameInstructionsScreen(screen)
+            elif stage == STAGE_GAME_INSTRUCTIONS and result == 'home':
                 stage = STAGE_HOME
                 home_screen = HomeScreen(screen, selected_character, player_name, BG_STAGES[bg_stage])
                 fade_in(screen, home_screen.draw)
@@ -136,7 +140,7 @@ def main():
                 victory_played = True
 
                 font = pygame.font.SysFont('Arial', 28)
-                msg = "Head home right now!"
+                msg = "Head home right now to see clear background!"
                 text_surface = font.render(msg, True, (255, 255, 255))
                 screen.fill((0, 0, 0))
                 screen.blit(text_surface, (
